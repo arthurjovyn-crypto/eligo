@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import {
   Sun, Zap, Home, Building2, Check, AlertTriangle, ChevronLeft,
   ArrowRight, MapPin, Info, ExternalLink, RotateCcw, ShieldCheck,
@@ -18,7 +18,7 @@ export default function Eligo() {
   const [phase, setPhase] = useState("intro");
   const [idx, setIdx] = useState(0);
   const [a, setA] = useState({});
-  const [hwPct, setHwPct] = useState(0);
+  const hwRef = useRef(0);
 
   const set = (id, val) => setA((p) => ({ ...p, [id]: val }));
 
@@ -294,15 +294,13 @@ export default function Eligo() {
   const answered = cur && (cur.optional || (a[cur.id] !== undefined && a[cur.id] !== ""));
   const isLast = idx >= total - 1;
 
-  const pct = Math.max(total > 0 ? Math.round(((idx + 1) / (total + 1)) * 100) : 0, hwPct);
+  const rawPct = total > 0 ? Math.round((idx / total) * 100) : 0;
+  if (rawPct > hwRef.current) hwRef.current = rawPct;
+  const pct = hwRef.current;
 
-  const next = () => {
-    const after = total > 0 ? Math.round(((idx + 1) / total) * 100) : 100;
-    setHwPct((p) => Math.max(p, after));
-    if (isLast) setPhase("results"); else setIdx((i) => i + 1);
-  };
+  const next = () => { if (isLast) setPhase("results"); else setIdx((i) => i + 1); };
   const back = () => { if (idx === 0) setPhase("intro"); else setIdx((i) => i - 1); };
-  const restart = () => { setA({}); setIdx(0); setPhase("intro"); setHwPct(0); };
+  const restart = () => { setA({}); setIdx(0); setPhase("intro"); hwRef.current = 0; };
 
   const aids = useMemo(() => computeAids(a), [a]);
 
