@@ -18,6 +18,7 @@ export default function Eligo() {
   const [phase, setPhase] = useState("intro");
   const [idx, setIdx] = useState(0);
   const [a, setA] = useState({});
+  const [hwPct, setHwPct] = useState(0);
 
   const set = (id, val) => setA((p) => ({ ...p, [id]: val }));
 
@@ -293,9 +294,15 @@ export default function Eligo() {
   const answered = cur && (cur.optional || (a[cur.id] !== undefined && a[cur.id] !== ""));
   const isLast = idx >= total - 1;
 
-  const next = () => { if (isLast) setPhase("results"); else setIdx((i) => i + 1); };
+  const pct = Math.max(total > 0 ? Math.round(((idx + 1) / (total + 1)) * 100) : 0, hwPct);
+
+  const next = () => {
+    const after = total > 0 ? Math.round(((idx + 1) / total) * 100) : 100;
+    setHwPct((p) => Math.max(p, after));
+    if (isLast) setPhase("results"); else setIdx((i) => i + 1);
+  };
   const back = () => { if (idx === 0) setPhase("intro"); else setIdx((i) => i - 1); };
-  const restart = () => { setA({}); setIdx(0); setPhase("intro"); };
+  const restart = () => { setA({}); setIdx(0); setPhase("intro"); setHwPct(0); };
 
   const aids = useMemo(() => computeAids(a), [a]);
 
@@ -338,10 +345,10 @@ export default function Eligo() {
             <div className="mb-8">
               <div className="flex justify-between text-xs mb-2" style={{ color: "#8a978f" }}>
                 <span>Question {idx + 1} / {total}</span>
-                <span>{Math.round((idx / total) * 100)}%</span>
+                <span>{pct}%</span>
               </div>
               <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: "#dbe5dd" }}>
-                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${(idx / total) * 100}%`, backgroundColor: "#2e7d52" }} />
+                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${pct}%`, backgroundColor: "#2e7d52" }} />
               </div>
             </div>
 
@@ -886,3 +893,4 @@ function DromResults({ a, onRestart, onEdit }) {
     </div>
   );
 }
+
